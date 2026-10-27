@@ -1067,8 +1067,8 @@
   const SG_BASE = typeof SG_API_BASE !== "undefined" ? SG_API_BASE : "";
   const API_URL = SG_BASE + "/api/sensors/latest"; // Flask endpoint
   const POLL_INTERVAL = 5000; // ms
-  console.info("[SmartGarden] dashboard.js versi 20261027b dimuat");
-  window.SG_JS_VERSION = "20261027b";
+  console.info("[SmartGarden] dashboard.js versi 20261027d dimuat");
+  window.SG_JS_VERSION = "20261027d";
 
   // Resolusi grafik per periode (24 jam = tiap 10 menit, 7 hari = tiap jam,
   // 30 hari = tiap 3 jam). Titik terakhir selalu "live" (diperbarui realtime).
@@ -1189,10 +1189,13 @@
   if (isRunningStandalone()) hideInstallButton();
 
   // ── Manual Control (Nutrisi A/B, pH Up/Down) ──
-  // Nutrisi A sudah terhubung ke relay ESP32 lewat Firebase Realtime Database
-  // (path di bawah). Kontrol lain masih hanya mengubah tampilan.
+  // Keempat kontrol terhubung ke relay ESP32 lewat Firebase Realtime Database.
+  // Nama key di sini harus sama dengan KEYS[] di sketch ESP32.
   const CONTROL_DB_PATHS = {
-    "nutrisi-a": "Pompa/Nutrisi_A",
+    "nutrisi-a": "Pompa/Nutrisi A",
+    "nutrisi-b": "Pompa/Nutrisi B",
+    "ph-up": "Pompa/pH-Up",
+    "ph-down": "Pompa/pH-Down",
   };
 
   // Ubah tampilan kartu (tanpa menyentuh database / penghitung).
