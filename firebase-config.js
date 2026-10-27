@@ -3,12 +3,16 @@
 // Nilai apiKey di sini BUKAN rahasia (memang untuk dipakai di browser); keamanan diatur lewat
 // Authentication, Rules database, dan "Authorized domains" di Firebase Console.
 const SG_FIREBASE_CONFIG = {
-  apiKey: "GANTI_DENGAN_API_KEY",
+  apiKey: "AIzaSyB3gmwLVd6ASfCmoybXLW7WFGafZFMSkdI",
   authDomain: "hidroponik-skripsi-b82d7.firebaseapp.com",
+  databaseURL:
+    "https://hidroponik-skripsi-b82d7-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "hidroponik-skripsi-b82d7",
-  databaseURL: "https://hidroponik-skripsi-b82d7-default-rtdb.asia-southeast1.firebasedatabase.app",
-  appId: "GANTI_DENGAN_APP_ID",
+  storageBucket: "hidroponik-skripsi-b82d7.firebasestorage.app",
+  messagingSenderId: "502838614791",
+  appId: "1:502838614791:web:7d110285f8baf470fe83a2",
 };
+
 
 // Alamat backend Flask (sensor & push notification).
 //  - Situs dibuka dari server yang sama dengan Flask  → biarkan "" (kosong).
