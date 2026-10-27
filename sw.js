@@ -8,8 +8,8 @@
 let SG_API_BASE_SW = '';
 try { importScripts('firebase-config.js'); SG_API_BASE_SW = SG_API_BASE; } catch (e) {}
 
-const SW_VERSION = 'smartgarden-sw-v16';
-const SHELL_CACHE = "smartgarden-shell-v16";
+const SW_VERSION = 'smartgarden-sw-v18';
+const SHELL_CACHE = "smartgarden-shell-v18";
 
 // Aset inti ("app shell") yang di-precache saat install supaya aplikasi
 // tetap bisa dibuka (login maupun dashboard) walau koneksi lemah/offline.
