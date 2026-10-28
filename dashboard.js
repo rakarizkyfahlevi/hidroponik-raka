@@ -1067,8 +1067,8 @@
   const SG_BASE = typeof SG_API_BASE !== "undefined" ? SG_API_BASE : "";
   const API_URL = SG_BASE + "/api/sensors/latest"; // Flask endpoint
   const POLL_INTERVAL = 5000; // ms
-  console.info("[SmartGarden] dashboard.js versi 20261028d dimuat");
-  window.SG_JS_VERSION = "20261028d";
+  console.info("[SmartGarden] dashboard.js versi 20261029a dimuat");
+  window.SG_JS_VERSION = "20261029a";
 
   // Resolusi grafik per periode (24 jam = tiap 10 menit, 7 hari = tiap jam,
   // 30 hari = tiap 3 jam). Titik terakhir selalu "live" (diperbarui realtime).
@@ -1326,8 +1326,49 @@
   const themeToggleBtn = document.getElementById("theme-toggle-btn");
   const themeToggleIcon = document.getElementById("theme-toggle-icon");
 
+  // Warna sumbu & grid grafik mengikuti tema (warna asli disimpan lalu dipulihkan saat mode terang)
+  const DARK_TICK_MAP = {
+    "#b45309": "#fbbf24",
+    "#6d28d9": "#c4b5fd",
+    "#be123c": "#fda4af",
+    "#1d4ed8": "#93c5fd",
+  };
+  function restyleCharts(isDark) {
+    if (typeof Chart === "undefined" || !Chart.instances) return;
+    Object.values(Chart.instances).forEach((ch) => {
+      const sc = ch.config && ch.config.options && ch.config.options.scales;
+      if (!sc) return;
+      if (!ch.$origColors) {
+        ch.$origColors = {};
+        ["x", "y"].forEach((k) => {
+          if (!sc[k]) return;
+          ch.$origColors[k] = {
+            tick: sc[k].ticks ? sc[k].ticks.color : undefined,
+            grid: sc[k].grid ? sc[k].grid.color : undefined,
+          };
+        });
+      }
+      ["x", "y"].forEach((k) => {
+        const s = sc[k];
+        const o = ch.$origColors[k];
+        if (!s || !o) return;
+        s.ticks = s.ticks || {};
+        s.grid = s.grid || {};
+        if (isDark) {
+          s.ticks.color = DARK_TICK_MAP[o.tick] || "#a7f3d0";
+          s.grid.color = "rgba(167, 243, 208, 0.12)";
+        } else {
+          s.ticks.color = o.tick;
+          s.grid.color = o.grid;
+        }
+      });
+      ch.update("none");
+    });
+  }
+
   function applyTheme(isDark) {
     document.body.classList.toggle("dark-mode", isDark);
+    restyleCharts(isDark);
     if (themeToggleIcon) themeToggleIcon.textContent = isDark ? "☀️" : "🌙";
     if (themeToggleBtn) {
       themeToggleBtn.setAttribute("aria-pressed", isDark ? "true" : "false");
@@ -1840,6 +1881,7 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 6, right: 12, bottom: 0, left: 0 } },
       interaction: {
         mode: "index",
         intersect: false,
@@ -1852,6 +1894,11 @@
       scales: {
         x: {
           ticks: {
+            autoSkip: true,
+            autoSkipPadding: 14,
+            maxTicksLimit: 8,
+            maxRotation: 0,
+            minRotation: 0,
             color: "#166534",
             font: {
               family: "DM Mono",
@@ -1863,6 +1910,9 @@
           },
         },
         y: {
+          afterFit(scale) {
+            scale.width = 56; // lebar sumbu Y tetap di semua grafik
+          },
           min: 15,
           max: 39,
 
@@ -1903,6 +1953,7 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 6, right: 12, bottom: 0, left: 0 } },
       interaction: {
         mode: "index",
         intersect: false,
@@ -1915,6 +1966,11 @@
       scales: {
         x: {
           ticks: {
+            autoSkip: true,
+            autoSkipPadding: 14,
+            maxTicksLimit: 8,
+            maxRotation: 0,
+            minRotation: 0,
             color: "#166534",
             font: {
               family: "DM Mono",
@@ -1926,6 +1982,9 @@
           },
         },
         y: {
+          afterFit(scale) {
+            scale.width = 56; // lebar sumbu Y tetap di semua grafik
+          },
           ticks: {
             color: "#1d4ed8",
             font: {
@@ -2031,6 +2090,7 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 6, right: 12, bottom: 0, left: 0 } },
       interaction: {
         mode: "index",
         intersect: false,
@@ -2043,6 +2103,11 @@
       scales: {
         x: {
           ticks: {
+            autoSkip: true,
+            autoSkipPadding: 14,
+            maxTicksLimit: 8,
+            maxRotation: 0,
+            minRotation: 0,
             color: "#166534",
             font: {
               family: "DM Mono",
@@ -2054,6 +2119,9 @@
           },
         },
         y: {
+          afterFit(scale) {
+            scale.width = 56; // lebar sumbu Y tetap di semua grafik
+          },
           ticks: {
             color: "#92400e",
             font: {
@@ -2091,6 +2159,7 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 6, right: 12, bottom: 0, left: 0 } },
         interaction: {
           mode: "index",
           intersect: false,
@@ -2103,6 +2172,11 @@
         scales: {
           x: {
             ticks: {
+              autoSkip: true,
+              autoSkipPadding: 14,
+              maxTicksLimit: 8,
+              maxRotation: 0,
+              minRotation: 0,
               color: "#166534",
               font: {
                 family: "DM Mono",
@@ -2114,6 +2188,9 @@
             },
           },
           y: {
+          afterFit(scale) {
+            scale.width = 56; // lebar sumbu Y tetap di semua grafik
+          },
             ticks: {
               color: "#1d4ed8",
               font: {
@@ -2150,6 +2227,7 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 6, right: 12, bottom: 0, left: 0 } },
       interaction: {
         mode: "index",
         intersect: false,
@@ -2162,6 +2240,11 @@
       scales: {
         x: {
           ticks: {
+            autoSkip: true,
+            autoSkipPadding: 14,
+            maxTicksLimit: 8,
+            maxRotation: 0,
+            minRotation: 0,
             color: "#166534",
             font: {
               family: "DM Mono",
@@ -2173,6 +2256,9 @@
           },
         },
         y: {
+          afterFit(scale) {
+            scale.width = 56; // lebar sumbu Y tetap di semua grafik
+          },
           min: 0,
           max: 14,
           ticks: {
@@ -2210,6 +2296,7 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 6, right: 12, bottom: 0, left: 0 } },
       interaction: {
         mode: "index",
         intersect: false,
@@ -2222,6 +2309,11 @@
       scales: {
         x: {
           ticks: {
+            autoSkip: true,
+            autoSkipPadding: 14,
+            maxTicksLimit: 8,
+            maxRotation: 0,
+            minRotation: 0,
             color: "#166534",
             font: {
               family: "DM Mono",
@@ -2233,6 +2325,9 @@
           },
         },
         y: {
+          afterFit(scale) {
+            scale.width = 56; // lebar sumbu Y tetap di semua grafik
+          },
           min: 0,
           max: 2000,
           ticks: {
@@ -2249,6 +2344,9 @@
       },
     },
   });
+
+  // Terapkan tema saat ini ke grafik yang baru dibuat (preferensi tersimpan)
+  restyleCharts(document.body.classList.contains("dark-mode"));
 
   // ── Penghitung penambahan (Nutrisi A/B, pH Up/Down) ──
   const DOSE_LABELS = {
