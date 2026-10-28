@@ -3508,7 +3508,7 @@ body.dark-mode .chart-btn:hover {
    dan tidak bergantung pada isi, data, atau periode.
    ========================================================= */
 #analytics {
-  --chart-plot-h: 320px; /* tinggi area grafik: ubah angka ini untuk semua grafik sekaligus */
+  --chart-plot-h: 440px; /* tinggi area grafik: ubah angka ini untuk semua grafik sekaligus */
 }
 
 #analytics .chart-grid {
@@ -3547,7 +3547,7 @@ body.dark-mode .chart-btn:hover {
 
 @media (max-width: 600px) {
   #analytics {
-    --chart-plot-h: 250px;
+    --chart-plot-h: 320px;
   }
 
   #analytics .chart-grid {
