@@ -3387,7 +3387,7 @@ section {
   max-height: none;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1279px) {
   #analytics .chart-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -3499,4 +3499,62 @@ body.dark-mode .chart-btn:hover {
   color: #ecfdf5;
   background: rgba(34, 197, 94, 0.3);
   border-color: #4ade80;
+}
+
+/* =========================================================
+   ANALITIK — SATU UKURAN GRAFIK UNTUK SEMUA
+   Tinggi area grafik dikunci dalam piksel lewat satu variabel,
+   header kartu juga dikunci, jadi semua kartu otomatis identik
+   dan tidak bergantung pada isi, data, atau periode.
+   ========================================================= */
+#analytics {
+  --chart-plot-h: 320px; /* tinggi area grafik: ubah angka ini untuk semua grafik sekaligus */
+}
+
+#analytics .chart-grid {
+  grid-auto-rows: auto;
+  align-items: start;
+}
+
+#analytics .chart-card {
+  height: auto;
+  flex: none;
+}
+
+#analytics .chart-card-header {
+  height: 60px;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+#analytics .chart-card-header h4 {
+  height: 20px;
+  line-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#analytics .chart-btn {
+  height: 28px;
+  padding: 0;
+  line-height: 26px;
+}
+
+#analytics .chart-canvas-wrap {
+  flex: none;
+  height: var(--chart-plot-h);
+}
+
+@media (max-width: 600px) {
+  #analytics {
+    --chart-plot-h: 250px;
+  }
+
+  #analytics .chart-grid {
+    grid-auto-rows: auto;
+  }
+
+  #analytics .chart-card {
+    height: auto;
+  }
 }
