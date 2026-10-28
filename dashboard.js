@@ -1067,8 +1067,8 @@
   const SG_BASE = typeof SG_API_BASE !== "undefined" ? SG_API_BASE : "";
   const API_URL = SG_BASE + "/api/sensors/latest"; // Flask endpoint
   const POLL_INTERVAL = 5000; // ms
-  console.info("[SmartGarden] dashboard.js versi 20261028c dimuat");
-  window.SG_JS_VERSION = "20261028c";
+  console.info("[SmartGarden] dashboard.js versi 20261028d dimuat");
+  window.SG_JS_VERSION = "20261028d";
 
   // Resolusi grafik per periode (24 jam = tiap 10 menit, 7 hari = tiap jam,
   // 30 hari = tiap 3 jam). Titik terakhir selalu "live" (diperbarui realtime).
@@ -3363,9 +3363,46 @@
     };
   }
 
+  // ── Riwayat sensor dari Firebase (path "history") ──
+  // ESP32 menyimpan 1 catatan tiap 10 menit: { suhu, ts, ... } (ts = ms, waktu server).
+  // Saat dashboard dibuka, catatan 30 hari terakhir dimuat ke grafik Analitik,
+  // jadi grafik tidak kosong lagi setelah halaman di-refresh / ditutup.
+  const HISTORY_DAYS = 30;
+
+  async function loadHistoryFromFirebase() {
+    try {
+      const since = Date.now() - HISTORY_DAYS * 24 * 3600e3;
+      const snap = await sgDb
+        .ref("history")
+        .orderByChild("ts")
+        .startAt(since)
+        .once("value");
+      const rows = [];
+      snap.forEach((child) => {
+        const v = child.val();
+        if (v && Number.isFinite(Number(v.ts))) rows.push(v);
+      });
+      rows.sort((a, b) => a.ts - b.ts); // wajib urut dari yang terlama
+      rows.forEach((row) => {
+        const d = sensorFromFirebase(row);
+        ["temp", "hum", "soil", "dist", "ph", "ppm"].forEach((k) => {
+          if (Number.isFinite(d[k])) pushLivePoint(k, d[k], Number(row.ts));
+        });
+      });
+      Object.keys(chartObjByKey).forEach((k) =>
+        applyPeriodChart(chartObjByKey[k], k, activePeriod[k]),
+      );
+      console.info("[SmartGarden] Riwayat dimuat:", rows.length, "catatan");
+    } catch (err) {
+      console.error("[SmartGarden] Gagal memuat riwayat:", err);
+    }
+  }
+
   if (typeof sgAuth !== "undefined" && typeof sgDb !== "undefined" && sgDb) {
-    sgAuth.onAuthStateChanged((user) => {
+    sgAuth.onAuthStateChanged(async (user) => {
       if (!user) return;
+      // Muat riwayat dulu, baru pasang listener live, supaya urutan titik benar.
+      await loadHistoryFromFirebase();
       sgDb.ref("sensor").on(
         "value",
         (snap) => {
