@@ -1067,8 +1067,8 @@
   const SG_BASE = typeof SG_API_BASE !== "undefined" ? SG_API_BASE : "";
   const API_URL = SG_BASE + "/api/sensors/latest"; // Flask endpoint
   const POLL_INTERVAL = 5000; // ms
-  console.info("[SmartGarden] dashboard.js versi 20261029b dimuat");
-  window.SG_JS_VERSION = "20261029b";
+  console.info("[SmartGarden] dashboard.js versi 20261029c dimuat");
+  window.SG_JS_VERSION = "20261029c";
 
   // Resolusi grafik per periode (24 jam = tiap 10 menit, 7 hari = tiap jam,
   // 30 hari = tiap 3 jam). Titik terakhir selalu "live" (diperbarui realtime).
@@ -1874,7 +1874,15 @@
           fill: true,
           tension: 0.4,
           borderWidth: 2,
-          pointRadius: 0,
+          // titik kecil di setiap data supaya posisi nilai terlihat
+          pointRadius: (c) => {
+            const n = c.chart.data.labels.length;
+            return n <= 40 ? 3.5 : n <= 100 ? 2.5 : 2;
+          },
+          pointHoverRadius: 6,
+          pointBackgroundColor: (c) => c.dataset.borderColor,
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 1,
         },
       ],
     },
@@ -1893,10 +1901,27 @@
       },
       scales: {
         x: {
+          // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+          afterFit(scale) {
+            scale.height = 46;
+          },
+          // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
+          afterBuildTicks(scale) {
+            const all = scale.ticks;
+            const maxLabels = Math.max(2, Math.floor(scale.maxWidth / 76));
+            if (all.length > maxLabels) {
+              const stepN = Math.ceil(all.length / maxLabels);
+              scale.ticks = all.filter((t, idx) => idx % stepN === 0);
+            }
+          },
           ticks: {
-            autoSkip: true,
-            autoSkipPadding: 14,
-            maxTicksLimit: 8,
+            autoSkip: false,
+            padding: 8,
+            // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
+            callback(value) {
+              const l = this.getLabelForValue(value);
+              return typeof l === "string" && l.indexOf(", ") > -1 ? l.split(", ") : l;
+            },
             maxRotation: 0,
             minRotation: 0,
             color: "#166534",
@@ -1946,7 +1971,15 @@
           fill: true,
           tension: 0.4,
           borderWidth: 2,
-          pointRadius: 0,
+          // titik kecil di setiap data supaya posisi nilai terlihat
+          pointRadius: (c) => {
+            const n = c.chart.data.labels.length;
+            return n <= 40 ? 3.5 : n <= 100 ? 2.5 : 2;
+          },
+          pointHoverRadius: 6,
+          pointBackgroundColor: (c) => c.dataset.borderColor,
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 1,
         },
       ],
     },
@@ -1965,10 +1998,27 @@
       },
       scales: {
         x: {
+          // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+          afterFit(scale) {
+            scale.height = 46;
+          },
+          // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
+          afterBuildTicks(scale) {
+            const all = scale.ticks;
+            const maxLabels = Math.max(2, Math.floor(scale.maxWidth / 76));
+            if (all.length > maxLabels) {
+              const stepN = Math.ceil(all.length / maxLabels);
+              scale.ticks = all.filter((t, idx) => idx % stepN === 0);
+            }
+          },
           ticks: {
-            autoSkip: true,
-            autoSkipPadding: 14,
-            maxTicksLimit: 8,
+            autoSkip: false,
+            padding: 8,
+            // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
+            callback(value) {
+              const l = this.getLabelForValue(value);
+              return typeof l === "string" && l.indexOf(", ") > -1 ? l.split(", ") : l;
+            },
             maxRotation: 0,
             minRotation: 0,
             color: "#166534",
@@ -2083,7 +2133,15 @@
           fill: true,
           tension: 0.4,
           borderWidth: 2,
-          pointRadius: 0,
+          // titik kecil di setiap data supaya posisi nilai terlihat
+          pointRadius: (c) => {
+            const n = c.chart.data.labels.length;
+            return n <= 40 ? 3.5 : n <= 100 ? 2.5 : 2;
+          },
+          pointHoverRadius: 6,
+          pointBackgroundColor: (c) => c.dataset.borderColor,
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 1,
         },
       ],
     },
@@ -2102,10 +2160,27 @@
       },
       scales: {
         x: {
+          // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+          afterFit(scale) {
+            scale.height = 46;
+          },
+          // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
+          afterBuildTicks(scale) {
+            const all = scale.ticks;
+            const maxLabels = Math.max(2, Math.floor(scale.maxWidth / 76));
+            if (all.length > maxLabels) {
+              const stepN = Math.ceil(all.length / maxLabels);
+              scale.ticks = all.filter((t, idx) => idx % stepN === 0);
+            }
+          },
           ticks: {
-            autoSkip: true,
-            autoSkipPadding: 14,
-            maxTicksLimit: 8,
+            autoSkip: false,
+            padding: 8,
+            // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
+            callback(value) {
+              const l = this.getLabelForValue(value);
+              return typeof l === "string" && l.indexOf(", ") > -1 ? l.split(", ") : l;
+            },
             maxRotation: 0,
             minRotation: 0,
             color: "#166534",
@@ -2152,7 +2227,15 @@
             fill: true,
             tension: 0.4,
             borderWidth: 2,
-            pointRadius: 0,
+            // titik kecil di setiap data supaya posisi nilai terlihat
+            pointRadius: (c) => {
+              const n = c.chart.data.labels.length;
+              return n <= 40 ? 3.5 : n <= 100 ? 2.5 : 2;
+            },
+            pointHoverRadius: 6,
+            pointBackgroundColor: (c) => c.dataset.borderColor,
+            pointBorderColor: "#ffffff",
+            pointBorderWidth: 1,
           },
         ],
       },
@@ -2171,10 +2254,27 @@
         },
         scales: {
           x: {
+            // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+            afterFit(scale) {
+              scale.height = 46;
+            },
+            // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
+            afterBuildTicks(scale) {
+              const all = scale.ticks;
+              const maxLabels = Math.max(2, Math.floor(scale.maxWidth / 76));
+              if (all.length > maxLabels) {
+                const stepN = Math.ceil(all.length / maxLabels);
+                scale.ticks = all.filter((t, idx) => idx % stepN === 0);
+              }
+            },
             ticks: {
-              autoSkip: true,
-              autoSkipPadding: 14,
-              maxTicksLimit: 8,
+              autoSkip: false,
+              padding: 8,
+              // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
+              callback(value) {
+                const l = this.getLabelForValue(value);
+                return typeof l === "string" && l.indexOf(", ") > -1 ? l.split(", ") : l;
+              },
               maxRotation: 0,
               minRotation: 0,
               color: "#166534",
@@ -2220,7 +2320,15 @@
           fill: true,
           tension: 0.4,
           borderWidth: 2,
-          pointRadius: 0,
+          // titik kecil di setiap data supaya posisi nilai terlihat
+          pointRadius: (c) => {
+            const n = c.chart.data.labels.length;
+            return n <= 40 ? 3.5 : n <= 100 ? 2.5 : 2;
+          },
+          pointHoverRadius: 6,
+          pointBackgroundColor: (c) => c.dataset.borderColor,
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 1,
         },
       ],
     },
@@ -2239,10 +2347,27 @@
       },
       scales: {
         x: {
+          // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+          afterFit(scale) {
+            scale.height = 46;
+          },
+          // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
+          afterBuildTicks(scale) {
+            const all = scale.ticks;
+            const maxLabels = Math.max(2, Math.floor(scale.maxWidth / 76));
+            if (all.length > maxLabels) {
+              const stepN = Math.ceil(all.length / maxLabels);
+              scale.ticks = all.filter((t, idx) => idx % stepN === 0);
+            }
+          },
           ticks: {
-            autoSkip: true,
-            autoSkipPadding: 14,
-            maxTicksLimit: 8,
+            autoSkip: false,
+            padding: 8,
+            // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
+            callback(value) {
+              const l = this.getLabelForValue(value);
+              return typeof l === "string" && l.indexOf(", ") > -1 ? l.split(", ") : l;
+            },
             maxRotation: 0,
             minRotation: 0,
             color: "#166534",
@@ -2289,7 +2414,15 @@
           fill: true,
           tension: 0.4,
           borderWidth: 2,
-          pointRadius: 0,
+          // titik kecil di setiap data supaya posisi nilai terlihat
+          pointRadius: (c) => {
+            const n = c.chart.data.labels.length;
+            return n <= 40 ? 3.5 : n <= 100 ? 2.5 : 2;
+          },
+          pointHoverRadius: 6,
+          pointBackgroundColor: (c) => c.dataset.borderColor,
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 1,
         },
       ],
     },
@@ -2308,10 +2441,27 @@
       },
       scales: {
         x: {
+          // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+          afterFit(scale) {
+            scale.height = 46;
+          },
+          // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
+          afterBuildTicks(scale) {
+            const all = scale.ticks;
+            const maxLabels = Math.max(2, Math.floor(scale.maxWidth / 76));
+            if (all.length > maxLabels) {
+              const stepN = Math.ceil(all.length / maxLabels);
+              scale.ticks = all.filter((t, idx) => idx % stepN === 0);
+            }
+          },
           ticks: {
-            autoSkip: true,
-            autoSkipPadding: 14,
-            maxTicksLimit: 8,
+            autoSkip: false,
+            padding: 8,
+            // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
+            callback(value) {
+              const l = this.getLabelForValue(value);
+              return typeof l === "string" && l.indexOf(", ") > -1 ? l.split(", ") : l;
+            },
             maxRotation: 0,
             minRotation: 0,
             color: "#166534",
