@@ -1067,8 +1067,8 @@
   const SG_BASE = typeof SG_API_BASE !== "undefined" ? SG_API_BASE : "";
   const API_URL = SG_BASE + "/api/sensors/latest"; // Flask endpoint
   const POLL_INTERVAL = 5000; // ms
-  console.info("[SmartGarden] dashboard.js versi 20261028b dimuat");
-  window.SG_JS_VERSION = "20261028b";
+  console.info("[SmartGarden] dashboard.js versi 20261028c dimuat");
+  window.SG_JS_VERSION = "20261028c";
 
   // Resolusi grafik per periode (24 jam = tiap 10 menit, 7 hari = tiap jam,
   // 30 hari = tiap 3 jam). Titik terakhir selalu "live" (diperbarui realtime).
@@ -3335,8 +3335,61 @@
   // di layar loading selamanya.
   setTimeout(hideLoader, 6000);
 
+  // ── Sumber data sensor: Firebase Realtime Database (path "sensor") ──
+  // ESP32 menulis ke /sensor, dashboard membaca perubahan secara realtime
+  // (tanpa polling). Kalau data Firebase sudah masuk, polling ke Flask dilewati.
+  // Nama key di Firebase → ph, ppm, suhu, kelembapan, tanah, jarak
+  //   (alias bahasa Inggris juga dikenali: temperature, humidity, soil_moisture, distance)
+  // Opsional: updatedAt (waktu dalam ms) supaya teks "x detik lalu" akurat.
+  let firebaseSensorActive = false;
+
+  function sensorFromFirebase(d) {
+    const pick = (...keys) => {
+      for (const k of keys) {
+        const v = d[k];
+        if (v === null || v === undefined || v === "") continue;
+        const n = Number(v);
+        if (Number.isFinite(n)) return n;
+      }
+      return null;
+    };
+    return {
+      temp: pick("suhu", "temperature", "temp"),
+      hum: pick("kelembapan", "humidity", "hum"),
+      soil: pick("tanah", "soil_moisture", "soil"),
+      dist: pick("jarak", "distance", "dist"),
+      ph: pick("ph"),
+      ppm: pick("ppm"),
+    };
+  }
+
+  if (typeof sgAuth !== "undefined" && typeof sgDb !== "undefined" && sgDb) {
+    sgAuth.onAuthStateChanged((user) => {
+      if (!user) return;
+      sgDb.ref("sensor").on(
+        "value",
+        (snap) => {
+          const raw = snap.val();
+          if (!raw) return;
+          const data = sensorFromFirebase(raw);
+          if (!Object.values(data).some((v) => v !== null)) return;
+          firebaseSensorActive = true;
+          updateUI(data);
+          const t = Number(raw.updatedAt);
+          if (Number.isFinite(t) && t > 0) {
+            lastUpdateTimestamp = t;
+            refreshLastUpdateText();
+          }
+        },
+        (err) => console.error("[SmartGarden] Gagal membaca data sensor:", err),
+      );
+    });
+  }
+
   // ── Main polling loop ─────────────────────────────────
+  // Cadangan: ambil dari Flask hanya kalau data Firebase belum ada.
   async function poll() {
+    if (firebaseSensorActive) return;
     const data = await fetchSensorData();
     if (data) updateUI(data);
   }
