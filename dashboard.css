@@ -2022,10 +2022,12 @@ section {
 .chart-actions {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .chart-btn {
-  padding: 4px 12px;
+  padding: 4px 10px;
   border: 1px solid var(--border2);
   background: transparent;
   color: var(--text-secondary);
