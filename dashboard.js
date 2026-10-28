@@ -1072,11 +1072,20 @@
 
   // Resolusi grafik per periode (24 jam = tiap 10 menit, 7 hari = tiap jam,
   // 30 hari = tiap 3 jam). Titik terakhir selalu "live" (diperbarui realtime).
+  // Rentang grafik Analitik. step = jarak antar titik, points = jumlah titik.
+  // days = berapa hari riwayat Firebase yang perlu dimuat (0 = hanya data live).
+  const MIN = 60e3, HOUR = 3600e3, DAY = 24 * HOUR;
   const PERIODS = {
-    "24h": { step: 10 * 60e3, points: 144 },
-    "7d": { step: 3600e3, points: 168 },
-    "30d": { step: 3 * 3600e3, points: 240 },
+    live: { step: 5e3, points: 60, days: 0 },          // 5 detik/titik  → 5 menit terakhir
+    "30m": { step: 1 * MIN, points: 30, days: 1 },      // 1 menit/titik  → 30 menit
+    "1h": { step: 1 * MIN, points: 60, days: 1 },       // 1 menit/titik  → 1 jam
+    "6h": { step: 5 * MIN, points: 72, days: 1 },       // 5 menit/titik  → 6 jam
+    "1d": { step: 15 * MIN, points: 96, days: 1 },      // 15 menit/titik → 1 hari
+    "7d": { step: 1 * HOUR, points: 168, days: 7 },     // 1 jam/titik    → 7 hari
+    "1w": { step: 1 * HOUR, points: 168, days: 7 },     // 1 jam/titik    → 1 minggu
+    "1m": { step: 6 * HOUR, points: 120, days: 30 },    // 6 jam/titik    → 1 bulan
   };
+  const DEFAULT_PERIOD = "live";
 
   // ══════════════════════════════════════════════════════
   // PWA: SERVICE WORKER + NOTIFIKASI NATIVE (system tray HP)
@@ -1933,100 +1942,16 @@
   });
 
   // ── History storage for period switching ─────────────
-  const periodHistory = {
-    temp: {
-      "24h": {
-        labels: [],
-        data: [],
-      },
-      "7d": {
-        labels: [],
-        data: [],
-      },
-      "30d": {
-        labels: [],
-        data: [],
-      },
-    },
-    hum: {
-      "24h": {
-        labels: [],
-        data: [],
-      },
-      "7d": {
-        labels: [],
-        data: [],
-      },
-      "30d": {
-        labels: [],
-        data: [],
-      },
-    },
-    soil: {
-      "24h": {
-        labels: [],
-        data: [],
-      },
-      "7d": {
-        labels: [],
-        data: [],
-      },
-      "30d": {
-        labels: [],
-        data: [],
-      },
-    },
-    dist: {
-      "24h": {
-        labels: [],
-        data: [],
-      },
-      "7d": {
-        labels: [],
-        data: [],
-      },
-      "30d": {
-        labels: [],
-        data: [],
-      },
-    },
-    ph: {
-      "24h": {
-        labels: [],
-        data: [],
-      },
-      "7d": {
-        labels: [],
-        data: [],
-      },
-      "30d": {
-        labels: [],
-        data: [],
-      },
-    },
-    ppm: {
-      "24h": {
-        labels: [],
-        data: [],
-      },
-      "7d": {
-        labels: [],
-        data: [],
-      },
-      "30d": {
-        labels: [],
-        data: [],
-      },
-    },
-  };
-  const activePeriod = {
-    temp: "24h",
-    hum: "24h",
-    soil: "24h",
-    dist: "24h",
-    ph: "24h",
-    ppm: "24h",
-  };
+  const SENSOR_KEYS = ["temp", "hum", "soil", "dist", "ph", "ppm"];
+  const periodHistory = {};
+  const activePeriod = {};
+  SENSOR_KEYS.forEach((k) => {
+    periodHistory[k] = {};
+    Object.keys(PERIODS).forEach((p) => {
+      periodHistory[k][p] = { labels: [], data: [] };
+    });
+    activePeriod[k] = DEFAULT_PERIOD;
+  });
 
   function getMaxPoints(period) {
     return PERIODS[period] ? PERIODS[period].points : 144;
@@ -2034,7 +1959,13 @@
 
   function periodLabel(period, t) {
     const d = new Date(t);
-    if (period === "24h")
+    if (period === "live")
+      return d.toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+    if (period === "30m" || period === "1h" || period === "6h")
       return d.toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
@@ -2050,9 +1981,12 @@
   // Masukkan pembacaan realtime ke riwayat semua periode: titik terakhir
   // (bucket waktu yang sedang berjalan) diperbarui di tempat; saat bucket
   // berganti, titik baru ditambahkan dan titik tertua dibuang.
-  function pushLivePoint(key, value, now) {
+  // fromHistory = true → titik berasal dari riwayat Firebase, jadi rentang
+  // "live" (data realtime saja) dilewati.
+  function pushLivePoint(key, value, now, fromHistory) {
     now = now || Date.now();
     Object.keys(PERIODS).forEach((period) => {
+      if (fromHistory && period === "live") return;
       const cfg = PERIODS[period];
       const hist = periodHistory[key][period];
       const bucket = Math.floor(now / cfg.step) * cfg.step;
@@ -3289,6 +3223,9 @@
         btn.classList.add("active");
         activePeriod[chartKey] = period;
         applyPeriodChart(chartObjByKey[chartKey], chartKey, period);
+        // Rentang panjang (7D/1W/1M) → muat riwayat yang lebih lama bila perlu.
+        if (typeof sgDb !== "undefined" && sgDb && PERIODS[period].days)
+          loadHistoryFromFirebase(PERIODS[period].days);
       } else {
         // fallback for any other chart-btn groups without data-chart
         btn
@@ -3364,45 +3301,65 @@
   }
 
   // ── Riwayat sensor dari Firebase (path "history") ──
-  // ESP32 menyimpan 1 catatan tiap 10 menit: { suhu, ts, ... } (ts = ms, waktu server).
-  // Saat dashboard dibuka, catatan 30 hari terakhir dimuat ke grafik Analitik,
+  // ESP32 menyimpan 1 catatan tiap 1 menit: { suhu, ts, ... } (ts = ms, waktu server).
+  // Saat dashboard dibuka, catatan 1 hari dimuat dulu; 7D/1W/1M memuat lebih lama saat dipilih,
   // jadi grafik tidak kosong lagi setelah halaman di-refresh / ditutup.
-  const HISTORY_DAYS = 30;
+  // Riwayat dimuat bertahap sesuai rentang yang dibuka (hemat kuota):
+  // ≤1D → 1 hari, 7D/1W → 7 hari, 1M → 30 hari.
+  let historyLoadedDays = 0;
+  let historyLoading = null;
 
-  async function loadHistoryFromFirebase() {
-    try {
-      const since = Date.now() - HISTORY_DAYS * 24 * 3600e3;
-      const snap = await sgDb
-        .ref("history")
-        .orderByChild("ts")
-        .startAt(since)
-        .once("value");
-      const rows = [];
-      snap.forEach((child) => {
-        const v = child.val();
-        if (v && Number.isFinite(Number(v.ts))) rows.push(v);
-      });
-      rows.sort((a, b) => a.ts - b.ts); // wajib urut dari yang terlama
-      rows.forEach((row) => {
-        const d = sensorFromFirebase(row);
-        ["temp", "hum", "soil", "dist", "ph", "ppm"].forEach((k) => {
-          if (Number.isFinite(d[k])) pushLivePoint(k, d[k], Number(row.ts));
+  async function loadHistoryFromFirebase(days) {
+    if (days <= historyLoadedDays) return;
+    if (historyLoading) await historyLoading;
+    if (days <= historyLoadedDays) return;
+    historyLoading = (async () => {
+      try {
+        const since = Date.now() - days * DAY;
+        const snap = await sgDb
+          .ref("history")
+          .orderByChild("ts")
+          .startAt(since)
+          .once("value");
+        const rows = [];
+        snap.forEach((child) => {
+          const v = child.val();
+          if (v && Number.isFinite(Number(v.ts))) rows.push(v);
         });
-      });
-      Object.keys(chartObjByKey).forEach((k) =>
-        applyPeriodChart(chartObjByKey[k], k, activePeriod[k]),
-      );
-      console.info("[SmartGarden] Riwayat dimuat:", rows.length, "catatan");
-    } catch (err) {
-      console.error("[SmartGarden] Gagal memuat riwayat:", err);
-    }
+        rows.sort((a, b) => a.ts - b.ts); // wajib urut dari yang terlama
+
+        // Kosongkan riwayat (kecuali Live) lalu isi ulang dari awal agar urut.
+        SENSOR_KEYS.forEach((k) =>
+          Object.keys(PERIODS).forEach((p) => {
+            if (p === "live") return;
+            periodHistory[k][p] = { labels: [], data: [] };
+          }),
+        );
+        rows.forEach((row) => {
+          const d = sensorFromFirebase(row);
+          SENSOR_KEYS.forEach((k) => {
+            if (Number.isFinite(d[k]))
+              pushLivePoint(k, d[k], Number(row.ts), true);
+          });
+        });
+        historyLoadedDays = days;
+        Object.keys(chartObjByKey).forEach((k) =>
+          applyPeriodChart(chartObjByKey[k], k, activePeriod[k]),
+        );
+        console.info("[SmartGarden] Riwayat dimuat:", rows.length, "catatan");
+      } catch (err) {
+        console.error("[SmartGarden] Gagal memuat riwayat:", err);
+      }
+    })();
+    await historyLoading;
+    historyLoading = null;
   }
 
   if (typeof sgAuth !== "undefined" && typeof sgDb !== "undefined" && sgDb) {
     sgAuth.onAuthStateChanged(async (user) => {
       if (!user) return;
       // Muat riwayat dulu, baru pasang listener live, supaya urutan titik benar.
-      await loadHistoryFromFirebase();
+      await loadHistoryFromFirebase(1);
       sgDb.ref("sensor").on(
         "value",
         (snap) => {
