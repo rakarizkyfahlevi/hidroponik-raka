@@ -1067,8 +1067,8 @@
   const SG_BASE = typeof SG_API_BASE !== "undefined" ? SG_API_BASE : "";
   const API_URL = SG_BASE + "/api/sensors/latest"; // Flask endpoint
   const POLL_INTERVAL = 5000; // ms
-  console.info("[SmartGarden] dashboard.js versi 20261027d dimuat");
-  window.SG_JS_VERSION = "20261027d";
+  console.info("[SmartGarden] dashboard.js versi 20261028b dimuat");
+  window.SG_JS_VERSION = "20261028b";
 
   // Resolusi grafik per periode (24 jam = tiap 10 menit, 7 hari = tiap jam,
   // 30 hari = tiap 3 jam). Titik terakhir selalu "live" (diperbarui realtime).
@@ -2357,6 +2357,28 @@
   const ppmRangeLabelEl = document.getElementById("ppm-range-label");
   const ppmTargetMinInputEl = document.getElementById("ppm-target-min-input");
   const ppmTargetMaxInputEl = document.getElementById("ppm-target-max-input");
+  // ── Penyimpanan pengaturan rentang PPM & pH di Firebase Realtime Database ──
+  // Path: /setting { ppmMin, ppmMax, phMin, phMax }
+  // Dengan begini pengaturan sama di semua perangkat, dan ESP32 juga bisa membacanya.
+  const SETTINGS_PATH = "setting";
+
+  function saveSettingsToFirebase(values) {
+    if (typeof sgDb === "undefined" || !sgDb) {
+      return Promise.reject(new Error("Firebase tidak tersedia"));
+    }
+    return sgDb.ref(SETTINGS_PATH).update(values);
+  }
+
+  function showSaveError(err) {
+    console.error("[SmartGarden] Gagal menyimpan pengaturan ke Firebase:", err);
+    showNotification(
+      "danger",
+      "❌",
+      "Gagal Menyimpan",
+      "Pengaturan tidak tersimpan ke Firebase. Periksa koneksi internet dan rules database.",
+    );
+  }
+
   const ppmTargetFormEl = document.getElementById("ppm-target-form");
   // Kartu PPM di halaman Dashboard (menampilkan nilai yang sama dengan
   // kartu "Pengaturan PPM Nutrisi" di Manual Control)
@@ -2633,20 +2655,25 @@
         );
         return;
       }
-      ppmTargetMin = rawMin;
-      ppmTargetMax = rawMax;
-      localStorage.setItem(PPM_MIN_KEY, String(ppmTargetMin));
-      localStorage.setItem(PPM_MAX_KEY, String(ppmTargetMax));
-      alertSent.ppm = null; // evaluasi ulang setelah rentang ideal berubah
-      const status = renderPpmUI();
-      showNotification(
-        "",
-        "✅",
-        "Rentang PPM Ideal Disimpan",
-        `Rentang PPM ideal diatur ke ${ppmTargetMin} – ${ppmTargetMax} ppm.`,
-      );
-      notifyPpmStatusChange(status);
-      warnIfNotifOff(status);
+      // Simpan ke Firebase dulu; tampilan baru diperbarui kalau berhasil.
+      saveSettingsToFirebase({ ppmMin: rawMin, ppmMax: rawMax })
+        .then(() => {
+          ppmTargetMin = rawMin;
+          ppmTargetMax = rawMax;
+          localStorage.setItem(PPM_MIN_KEY, String(ppmTargetMin)); // cadangan lokal
+          localStorage.setItem(PPM_MAX_KEY, String(ppmTargetMax));
+          alertSent.ppm = null; // evaluasi ulang setelah rentang ideal berubah
+          const status = renderPpmUI();
+          showNotification(
+            "",
+            "✅",
+            "Rentang PPM Ideal Disimpan",
+            `Rentang PPM ideal diatur ke ${ppmTargetMin} – ${ppmTargetMax} ppm.`,
+          );
+          notifyPpmStatusChange(status);
+          warnIfNotifOff(status);
+        })
+        .catch(showSaveError);
     });
   }
 
@@ -2808,24 +2835,96 @@
         );
         return;
       }
-      phTargetMin = rawMin;
-      phTargetMax = rawMax;
-      localStorage.setItem(PH_MIN_KEY, String(phTargetMin));
-      localStorage.setItem(PH_MAX_KEY, String(phTargetMax));
-      const status = renderPhSettingsUI(lastData.ph);
-      alertSent.ph = null;
-      showNotification(
-        "",
-        "✅",
-        "Rentang pH Ideal Disimpan",
-        `Rentang pH ideal diatur ke ${phTargetMin.toFixed(1)} – ${phTargetMax.toFixed(1)}.`,
-      );
-      checkSensorAlerts();
-      warnIfNotifOff(status);
+      // Simpan ke Firebase dulu; tampilan baru diperbarui kalau berhasil.
+      saveSettingsToFirebase({ phMin: rawMin, phMax: rawMax })
+        .then(() => {
+          phTargetMin = rawMin;
+          phTargetMax = rawMax;
+          localStorage.setItem(PH_MIN_KEY, String(phTargetMin)); // cadangan lokal
+          localStorage.setItem(PH_MAX_KEY, String(phTargetMax));
+          const status = renderPhSettingsUI(lastData.ph);
+          alertSent.ph = null;
+          showNotification(
+            "",
+            "✅",
+            "Rentang pH Ideal Disimpan",
+            `Rentang pH ideal diatur ke ${phTargetMin.toFixed(1)} – ${phTargetMax.toFixed(1)}.`,
+          );
+          checkSensorAlerts();
+          warnIfNotifOff(status);
+        })
+        .catch(showSaveError);
     });
   }
 
   renderPhSettingsUI(null); // render awal kosong sampai data sensor pertama masuk
+
+  // ── Sinkron rentang PPM & pH dari Firebase (sumber utama pengaturan) ──
+  function applySettingsFromFirebase(s) {
+    const pMin = Number(s.ppmMin);
+    const pMax = Number(s.ppmMax);
+    if (
+      Number.isFinite(pMin) && Number.isFinite(pMax) &&
+      pMin >= 0 && pMin < pMax &&
+      (pMin !== ppmTargetMin || pMax !== ppmTargetMax)
+    ) {
+      ppmTargetMin = pMin;
+      ppmTargetMax = pMax;
+      localStorage.setItem(PPM_MIN_KEY, String(pMin));
+      localStorage.setItem(PPM_MAX_KEY, String(pMax));
+      if (ppmTargetMinInputEl) ppmTargetMinInputEl.value = pMin;
+      if (ppmTargetMaxInputEl) ppmTargetMaxInputEl.value = pMax;
+      alertSent.ppm = null;
+      renderPpmUI();
+    }
+
+    const hMin = Number(s.phMin);
+    const hMax = Number(s.phMax);
+    if (
+      Number.isFinite(hMin) && Number.isFinite(hMax) &&
+      hMin >= PH_SCALE_MIN && hMin < hMax && hMax <= PH_SCALE_MAX &&
+      (hMin !== phTargetMin || hMax !== phTargetMax)
+    ) {
+      phTargetMin = hMin;
+      phTargetMax = hMax;
+      localStorage.setItem(PH_MIN_KEY, String(hMin));
+      localStorage.setItem(PH_MAX_KEY, String(hMax));
+      if (phTargetMinInputEl) phTargetMinInputEl.value = hMin;
+      if (phTargetMaxInputEl) phTargetMaxInputEl.value = hMax;
+      alertSent.ph = null;
+      renderPhSettingsUI(lastData.ph);
+    }
+  }
+
+  if (typeof sgAuth !== "undefined" && typeof sgDb !== "undefined" && sgDb) {
+    sgAuth.onAuthStateChanged((user) => {
+      if (!user) return;
+      sgDb.ref(SETTINGS_PATH).on(
+        "value",
+        (snap) => {
+          const s = snap.val();
+          if (!s) {
+            // Belum ada di database → isi dengan nilai yang berlaku sekarang
+            // (default atau cadangan lokal) supaya ESP32 juga bisa membacanya.
+            sgDb
+              .ref(SETTINGS_PATH)
+              .set({
+                ppmMin: ppmTargetMin,
+                ppmMax: ppmTargetMax,
+                phMin: phTargetMin,
+                phMax: phTargetMax,
+              })
+              .catch((err) =>
+                console.error("[SmartGarden] Gagal mengisi pengaturan awal:", err),
+              );
+            return;
+          }
+          applySettingsFromFirebase(s);
+        },
+        (err) => console.error("[SmartGarden] Gagal membaca pengaturan:", err),
+      );
+    });
+  }
 
   // Menyimpan hasil kalkulasi status terbaru (elemen kartu detailnya sudah
   // dihilangkan, tapi datanya tetap dipakai untuk notifikasi & laporan).
