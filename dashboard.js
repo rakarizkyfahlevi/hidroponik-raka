@@ -1067,8 +1067,8 @@
   const SG_BASE = typeof SG_API_BASE !== "undefined" ? SG_API_BASE : "";
   const API_URL = SG_BASE + "/api/sensors/latest"; // Flask endpoint
   const POLL_INTERVAL = 5000; // ms
-  console.info("[SmartGarden] dashboard.js versi 20261029a dimuat");
-  window.SG_JS_VERSION = "20261029a";
+  console.info("[SmartGarden] dashboard.js versi 20261029b dimuat");
+  window.SG_JS_VERSION = "20261029b";
 
   // Resolusi grafik per periode (24 jam = tiap 10 menit, 7 hari = tiap jam,
   // 30 hari = tiap 3 jam). Titik terakhir selalu "live" (diperbarui realtime).
