@@ -31,7 +31,7 @@
       href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="dashboard.css?v=20261101b" />
+    <link rel="stylesheet" href="dashboard.css?v=20261101c" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.3.1"></script>
@@ -649,103 +649,103 @@
         <div class="chart-card chart-main">
           <div class="chart-card-header">
             <h4>Suhu (°C)</h4>
+            <div class="chart-actions" id="chart-actions-temp">
+              <button class="chart-btn active" data-period="live" data-chart="temp">Live</button>
+              <button class="chart-btn" data-period="30m" data-chart="temp">30M</button>
+              <button class="chart-btn" data-period="1h" data-chart="temp">1H</button>
+              <button class="chart-btn" data-period="6h" data-chart="temp">6H</button>
+              <button class="chart-btn" data-period="1d" data-chart="temp">1D</button>
+              <button class="chart-btn" data-period="7d" data-chart="temp">7D</button>
+              <button class="chart-btn" data-period="1m" data-chart="temp">1M</button>
+            </div>
           </div>
           <div class="chart-canvas-wrap">
             <canvas id="chart-temp-main"></canvas>
-          </div>
-          <div class="chart-actions" id="chart-actions-temp">
-            <button class="chart-btn active" data-period="live" data-chart="temp">Live</button>
-            <button class="chart-btn" data-period="30m" data-chart="temp">30M</button>
-            <button class="chart-btn" data-period="1h" data-chart="temp">1H</button>
-            <button class="chart-btn" data-period="6h" data-chart="temp">6H</button>
-            <button class="chart-btn" data-period="1d" data-chart="temp">1D</button>
-            <button class="chart-btn" data-period="7d" data-chart="temp">7D</button>
-            <button class="chart-btn" data-period="1m" data-chart="temp">1M</button>
           </div>
         </div>
         <div class="chart-card chart-main" style="display: none">
           <div class="chart-card-header">
             <h4>Kelembapan Udara (%)</h4>
+            <div class="chart-actions" id="chart-actions-hum">
+              <button class="chart-btn active" data-period="live" data-chart="hum">Live</button>
+              <button class="chart-btn" data-period="30m" data-chart="hum">30M</button>
+              <button class="chart-btn" data-period="1h" data-chart="hum">1H</button>
+              <button class="chart-btn" data-period="6h" data-chart="hum">6H</button>
+              <button class="chart-btn" data-period="1d" data-chart="hum">1D</button>
+              <button class="chart-btn" data-period="7d" data-chart="hum">7D</button>
+              <button class="chart-btn" data-period="1m" data-chart="hum">1M</button>
+            </div>
           </div>
           <div class="chart-canvas-wrap">
             <canvas id="chart-hum-main"></canvas>
-          </div>
-          <div class="chart-actions" id="chart-actions-hum">
-            <button class="chart-btn active" data-period="live" data-chart="hum">Live</button>
-            <button class="chart-btn" data-period="30m" data-chart="hum">30M</button>
-            <button class="chart-btn" data-period="1h" data-chart="hum">1H</button>
-            <button class="chart-btn" data-period="6h" data-chart="hum">6H</button>
-            <button class="chart-btn" data-period="1d" data-chart="hum">1D</button>
-            <button class="chart-btn" data-period="7d" data-chart="hum">7D</button>
-            <button class="chart-btn" data-period="1m" data-chart="hum">1M</button>
           </div>
         </div>
         <div class="chart-card chart-main" style="display: none">
           <div class="chart-card-header">
             <h4>pH Air (%)</h4>
+            <div class="chart-actions" id="chart-actions-soil">
+              <button class="chart-btn active" data-period="live" data-chart="soil">Live</button>
+              <button class="chart-btn" data-period="30m" data-chart="soil">30M</button>
+              <button class="chart-btn" data-period="1h" data-chart="soil">1H</button>
+              <button class="chart-btn" data-period="6h" data-chart="soil">6H</button>
+              <button class="chart-btn" data-period="1d" data-chart="soil">1D</button>
+              <button class="chart-btn" data-period="7d" data-chart="soil">7D</button>
+              <button class="chart-btn" data-period="1m" data-chart="soil">1M</button>
+            </div>
           </div>
           <div class="chart-canvas-wrap">
             <canvas id="chart-soil-main"></canvas>
-          </div>
-          <div class="chart-actions" id="chart-actions-soil">
-            <button class="chart-btn active" data-period="live" data-chart="soil">Live</button>
-            <button class="chart-btn" data-period="30m" data-chart="soil">30M</button>
-            <button class="chart-btn" data-period="1h" data-chart="soil">1H</button>
-            <button class="chart-btn" data-period="6h" data-chart="soil">6H</button>
-            <button class="chart-btn" data-period="1d" data-chart="soil">1D</button>
-            <button class="chart-btn" data-period="7d" data-chart="soil">7D</button>
-            <button class="chart-btn" data-period="1m" data-chart="soil">1M</button>
           </div>
         </div>
         <div class="chart-card chart-main" style="display: none">
           <div class="chart-card-header">
             <h4>Level Air Tangki (cm)</h4>
+            <div class="chart-actions" id="chart-actions-dist">
+              <button class="chart-btn active" data-period="live" data-chart="dist">Live</button>
+              <button class="chart-btn" data-period="30m" data-chart="dist">30M</button>
+              <button class="chart-btn" data-period="1h" data-chart="dist">1H</button>
+              <button class="chart-btn" data-period="6h" data-chart="dist">6H</button>
+              <button class="chart-btn" data-period="1d" data-chart="dist">1D</button>
+              <button class="chart-btn" data-period="7d" data-chart="dist">7D</button>
+              <button class="chart-btn" data-period="1m" data-chart="dist">1M</button>
+            </div>
           </div>
           <div class="chart-canvas-wrap">
             <canvas id="chart-water-main"></canvas>
-          </div>
-          <div class="chart-actions" id="chart-actions-dist">
-            <button class="chart-btn active" data-period="live" data-chart="dist">Live</button>
-            <button class="chart-btn" data-period="30m" data-chart="dist">30M</button>
-            <button class="chart-btn" data-period="1h" data-chart="dist">1H</button>
-            <button class="chart-btn" data-period="6h" data-chart="dist">6H</button>
-            <button class="chart-btn" data-period="1d" data-chart="dist">1D</button>
-            <button class="chart-btn" data-period="7d" data-chart="dist">7D</button>
-            <button class="chart-btn" data-period="1m" data-chart="dist">1M</button>
           </div>
         </div>
         <div class="chart-card chart-main">
           <div class="chart-card-header">
             <h4>PPM Larutan Nutrisi</h4>
+            <div class="chart-actions" id="chart-actions-ppm">
+              <button class="chart-btn active" data-period="live" data-chart="ppm">Live</button>
+              <button class="chart-btn" data-period="30m" data-chart="ppm">30M</button>
+              <button class="chart-btn" data-period="1h" data-chart="ppm">1H</button>
+              <button class="chart-btn" data-period="6h" data-chart="ppm">6H</button>
+              <button class="chart-btn" data-period="1d" data-chart="ppm">1D</button>
+              <button class="chart-btn" data-period="7d" data-chart="ppm">7D</button>
+              <button class="chart-btn" data-period="1m" data-chart="ppm">1M</button>
+            </div>
           </div>
           <div class="chart-canvas-wrap">
             <canvas id="chart-ppm-main"></canvas>
-          </div>
-          <div class="chart-actions" id="chart-actions-ppm">
-            <button class="chart-btn active" data-period="live" data-chart="ppm">Live</button>
-            <button class="chart-btn" data-period="30m" data-chart="ppm">30M</button>
-            <button class="chart-btn" data-period="1h" data-chart="ppm">1H</button>
-            <button class="chart-btn" data-period="6h" data-chart="ppm">6H</button>
-            <button class="chart-btn" data-period="1d" data-chart="ppm">1D</button>
-            <button class="chart-btn" data-period="7d" data-chart="ppm">7D</button>
-            <button class="chart-btn" data-period="1m" data-chart="ppm">1M</button>
           </div>
         </div>
         <div class="chart-card chart-main">
           <div class="chart-card-header">
             <h4>pH Air</h4>
+            <div class="chart-actions" id="chart-actions-ph">
+              <button class="chart-btn active" data-period="live" data-chart="ph">Live</button>
+              <button class="chart-btn" data-period="30m" data-chart="ph">30M</button>
+              <button class="chart-btn" data-period="1h" data-chart="ph">1H</button>
+              <button class="chart-btn" data-period="6h" data-chart="ph">6H</button>
+              <button class="chart-btn" data-period="1d" data-chart="ph">1D</button>
+              <button class="chart-btn" data-period="7d" data-chart="ph">7D</button>
+              <button class="chart-btn" data-period="1m" data-chart="ph">1M</button>
+            </div>
           </div>
           <div class="chart-canvas-wrap">
             <canvas id="chart-ph-main"></canvas>
-          </div>
-          <div class="chart-actions" id="chart-actions-ph">
-            <button class="chart-btn active" data-period="live" data-chart="ph">Live</button>
-            <button class="chart-btn" data-period="30m" data-chart="ph">30M</button>
-            <button class="chart-btn" data-period="1h" data-chart="ph">1H</button>
-            <button class="chart-btn" data-period="6h" data-chart="ph">6H</button>
-            <button class="chart-btn" data-period="1d" data-chart="ph">1D</button>
-            <button class="chart-btn" data-period="7d" data-chart="ph">7D</button>
-            <button class="chart-btn" data-period="1m" data-chart="ph">1M</button>
           </div>
         </div>
       </div>
@@ -784,7 +784,7 @@
       })();
     </script>
     <script src="user-info.js?v=20261029c"></script>
-    <script src="dashboard.js?v=20261101b"></script>
+    <script src="dashboard.js?v=20261101c"></script>
     <script>
       // Diagnostik: kalau dashboard.js yang dimuat browser tidak cocok dengan
       // halaman ini (file lama / cache / salah folder), tampilkan peringatan.
