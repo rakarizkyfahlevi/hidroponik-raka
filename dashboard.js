@@ -1608,56 +1608,63 @@
     }
   }
 
-  // ── Suara notifikasi ─────────────────────────────────
-  // Nada dibuat langsung oleh browser (Web Audio API), jadi tidak butuh file
-  // audio. Browser melarang suara sebelum pengguna berinteraksi dengan
-  // halaman, jadi AudioContext baru dibuat/dibangunkan saat klik, sentuh,
-  // atau tekan tombol pertama. Preferensi suara disimpan di localStorage.
+  // ── Suara peringatan PPM / pH ────────────────────────
+  // Suara HANYA berbunyi ketika PPM atau pH berada di luar rentang ideal
+  // (di bawah batas minimal ATAU di atas batas maksimal) dan tombol suara
+  // sedang "Hidup". Tidak ada suara untuk klik tombol, simpan rentang, atau
+  // notifikasi informasi lain. Nada dibuat oleh browser (Web Audio API),
+  // jadi tidak butuh file audio. Browser melarang suara sebelum pengguna
+  // berinteraksi dengan halaman, jadi AudioContext dibangunkan saat klik,
+  // sentuh, atau tekan tombol pertama. Preferensi disimpan di localStorage.
   const SOUND_PREF_KEY = "smartgarden-notif-sound";
   let soundOn = true;
   try {
     soundOn = localStorage.getItem(SOUND_PREF_KEY) !== "off";
   } catch {}
   let audioCtx = null;
+  // Status yang sudah dibunyikan per sensor ("low" / "high" / null). Terpisah
+  // dari alertSent supaya menyimpan rentang baru tidak membunyikan ulang.
+  const soundSent = { ppm: null, ph: null };
 
   function unlockAudio() {
     try {
       if (!audioCtx) {
         const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
+        if (!AC) return Promise.resolve();
         audioCtx = new AC();
       }
-      if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+      if (audioCtx.state === "suspended")
+        return audioCtx.resume().catch(() => {});
     } catch {}
+    return Promise.resolve();
   }
   ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
     window.addEventListener(ev, unlockAudio, { passive: true }),
   );
 
-  // [frekuensi Hz, mulai (detik), durasi (detik)]
-  const SOUND_PATTERNS = {
-    alert: [[988, 0, 0.18], [784, 0.22, 0.18], [988, 0.44, 0.18], [784, 0.66, 0.3]],
-    info: [[659, 0, 0.14], [880, 0.15, 0.3]],
-    error: [[330, 0, 0.18], [262, 0.2, 0.32]],
-  };
+  // [frekuensi Hz, mulai (detik), durasi (detik)] — nada peringatan
+  const ALERT_TONE = [
+    [988, 0, 0.18],
+    [784, 0.22, 0.18],
+    [988, 0.44, 0.18],
+    [784, 0.66, 0.3],
+  ];
 
   function soundWillPlay() {
     return soundOn && !!audioCtx && audioCtx.state === "running";
   }
 
-  function playNotifSound(kind) {
+  function playAlertSound() {
     if (!soundWillPlay()) return false;
-    const pattern = SOUND_PATTERNS[kind] || SOUND_PATTERNS.info;
-    const isAlert = kind === "alert";
     try {
-      pattern.forEach(([freq, start, dur]) => {
+      ALERT_TONE.forEach(([freq, start, dur]) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         const t0 = audioCtx.currentTime + start;
-        osc.type = isAlert ? "triangle" : "sine";
+        osc.type = "triangle";
         osc.frequency.value = freq;
         gain.gain.setValueAtTime(0.0001, t0);
-        gain.gain.exponentialRampToValueAtTime(isAlert ? 0.35 : 0.22, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -1678,14 +1685,16 @@
 
   if (btnToggleSound) {
     btnToggleSound.addEventListener("click", () => {
-      unlockAudio();
       soundOn = !soundOn;
       try {
         localStorage.setItem(SOUND_PREF_KEY, soundOn ? "on" : "off");
       } catch {}
+      // Reset supaya kalau nilai masih di luar rentang saat suara dinyalakan
+      // kembali, peringatan langsung berbunyi (bukan nada contoh).
+      soundSent.ppm = null;
+      soundSent.ph = null;
       refreshSoundButtonUI();
-      // Pratinjau nada saat suara dinyalakan (klik = interaksi, jadi boleh bunyi)
-      if (soundOn) setTimeout(() => playNotifSound("info"), 80);
+      if (soundOn) unlockAudio().then(() => checkSensorAlerts());
     });
   }
   refreshSoundButtonUI();
@@ -2833,7 +2842,16 @@
     checks.forEach((c) => {
       if (c.status === "ok") {
         alertSent[c.key] = null; // normal lagi → reset
+        soundSent[c.key] = null;
         return;
+      }
+      // SUARA: langsung bunyi begitu nilai keluar rentang (di bawah minimal
+      // atau di atas maksimal), selama tombol suara Hidup. Tidak bergantung
+      // pada tombol notifikasi. Hanya ditandai kalau benar-benar berbunyi,
+      // jadi kalau browser masih menahan suara (belum ada klik), akan
+      // dicoba lagi di siklus data berikutnya.
+      if (soundOn && soundSent[c.key] !== c.status) {
+        if (playAlertSound()) soundSent[c.key] = c.status;
       }
       // Notifikasi MATI → jangan kirim & jangan tandai, supaya langsung
       // muncul begitu diaktifkan.
@@ -3454,17 +3472,6 @@
     els.notifContainer
       .querySelectorAll(`.notif[data-title="${title}"]`)
       .forEach((n) => n.remove());
-
-    // Bunyikan nada sesuai jenis notifikasi (peringatan = nada darurat)
-    if (title !== "Notifikasi Dinonaktifkan") {
-      playNotifSound(
-        /^(PPM|pH) Terlalu/.test(title)
-          ? "alert"
-          : /Tidak Valid|Diblokir|Tidak Didukung|Masih Mati/.test(title)
-            ? "error"
-            : "info",
-      );
-    }
 
     const notif = document.createElement("div");
     notif.dataset.title = title;
