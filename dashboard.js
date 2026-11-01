@@ -1901,9 +1901,9 @@
       },
       scales: {
         x: {
-          // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+          // label jam di sumbu X disembunyikan; tinggi sumbu dikunci kecil agar semua grafik seragam
           afterFit(scale) {
-            scale.height = 46;
+            scale.height = 10;
           },
           // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
           afterBuildTicks(scale) {
@@ -1915,6 +1915,7 @@
             }
           },
           ticks: {
+            display: false, // sembunyikan label jam
             autoSkip: false,
             padding: 8,
             // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
@@ -1998,9 +1999,9 @@
       },
       scales: {
         x: {
-          // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+          // label jam di sumbu X disembunyikan; tinggi sumbu dikunci kecil agar semua grafik seragam
           afterFit(scale) {
-            scale.height = 46;
+            scale.height = 10;
           },
           // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
           afterBuildTicks(scale) {
@@ -2012,6 +2013,7 @@
             }
           },
           ticks: {
+            display: false, // sembunyikan label jam
             autoSkip: false,
             padding: 8,
             // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
@@ -2160,9 +2162,9 @@
       },
       scales: {
         x: {
-          // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+          // label jam di sumbu X disembunyikan; tinggi sumbu dikunci kecil agar semua grafik seragam
           afterFit(scale) {
-            scale.height = 46;
+            scale.height = 10;
           },
           // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
           afterBuildTicks(scale) {
@@ -2174,6 +2176,7 @@
             }
           },
           ticks: {
+            display: false, // sembunyikan label jam
             autoSkip: false,
             padding: 8,
             // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
@@ -2254,9 +2257,9 @@
         },
         scales: {
           x: {
-            // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+            // label jam di sumbu X disembunyikan; tinggi sumbu dikunci kecil agar semua grafik seragam
             afterFit(scale) {
-              scale.height = 46;
+              scale.height = 10;
             },
             // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
             afterBuildTicks(scale) {
@@ -2268,6 +2271,7 @@
               }
             },
             ticks: {
+              display: false, // sembunyikan label jam
               autoSkip: false,
               padding: 8,
               // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
@@ -2347,9 +2351,9 @@
       },
       scales: {
         x: {
-          // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+          // label jam di sumbu X disembunyikan; tinggi sumbu dikunci kecil agar semua grafik seragam
           afterFit(scale) {
-            scale.height = 46;
+            scale.height = 10;
           },
           // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
           afterBuildTicks(scale) {
@@ -2361,6 +2365,7 @@
             }
           },
           ticks: {
+            display: false, // sembunyikan label jam
             autoSkip: false,
             padding: 8,
             // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
@@ -2441,9 +2446,9 @@
       },
       scales: {
         x: {
-          // tinggi sumbu X dikunci supaya area grafik tak berubah walau label 1 atau 2 baris
+          // label jam di sumbu X disembunyikan; tinggi sumbu dikunci kecil agar semua grafik seragam
           afterFit(scale) {
-            scale.height = 46;
+            scale.height = 10;
           },
           // jarak antar label dihitung dari lebar grafik: min. ±76px per label agar tidak berdempetan
           afterBuildTicks(scale) {
@@ -2455,6 +2460,7 @@
             }
           },
           ticks: {
+            display: false, // sembunyikan label jam
             autoSkip: false,
             padding: 8,
             // "28/10, 22.45" → dua baris: tanggal di atas, jam di bawah
