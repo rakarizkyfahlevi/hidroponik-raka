@@ -1201,8 +1201,8 @@
   // Keempat kontrol terhubung ke relay ESP32 lewat Firebase Realtime Database.
   // Nama key di sini harus sama dengan KEYS[] di sketch ESP32.
   const CONTROL_DB_PATHS = {
-    "nutrisi-a": "Pompa/Nutrisi A",
-    "nutrisi-b": "Pompa/Nutrisi B",
+    "nutrisi-a": "Pompa/Nutrisi-A",
+    "nutrisi-b": "Pompa/Nutrisi-B",
     "ph-up": "Pompa/pH-Up",
     "ph-down": "Pompa/pH-Down",
   };
