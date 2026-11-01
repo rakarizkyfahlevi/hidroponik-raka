@@ -3488,6 +3488,44 @@ section {
   overflow-wrap: anywhere;
 }
 
+/* Mode gelap: kartu Manual Control yang aktif (ON) tidak lagi putih,
+   sehingga label, status, dan hitungan tetap terbaca */
+body.dark-mode .control-card.is-on {
+  background: linear-gradient(180deg, #11402a 0%, var(--surface) 100%);
+  border-color: var(--green-400);
+  box-shadow:
+    0 0 0 1px rgba(34, 197, 94, 0.25),
+    0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-mode .control-card .card-label {
+  color: var(--text-primary);
+}
+
+body.dark-mode .control-card .control-status {
+  color: var(--text-secondary);
+}
+
+body.dark-mode .control-card.is-on .control-status {
+  color: var(--green-300);
+}
+
+body.dark-mode .control-card .control-count {
+  color: var(--text-muted);
+}
+
+body.dark-mode .control-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+body.dark-mode .control-slider {
+  background: #3b4a41;
+}
+
+body.dark-mode .control-switch input:checked + .control-slider {
+  background: var(--green-400);
+}
+
 /* Mode gelap: tombol periode grafik tetap terbaca */
 body.dark-mode .chart-btn {
   color: #a7f3d0;
