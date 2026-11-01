@@ -3596,3 +3596,19 @@ body.dark-mode .chart-btn:hover {
     height: auto;
   }
 }
+
+
+/* =========================================================
+   ANALITIK — tombol periode (Live, 30M, 1H, ...) di BAWAH grafik
+   Header kartu kini hanya berisi judul, tombol berada setelah area grafik.
+   ========================================================= */
+#analytics .chart-card-header {
+  height: auto;
+  gap: 0;
+  margin-bottom: 12px;
+}
+
+#analytics .chart-actions {
+  flex: 0 0 auto;
+  margin-top: 16px;
+}
