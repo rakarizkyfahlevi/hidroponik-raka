@@ -1257,6 +1257,7 @@
 
   const btnEnableNotif = document.getElementById("btn-enable-notif");
   const btnDisableNotif = document.getElementById("btn-disable-notif");
+  const btnToggleSound = document.getElementById("btn-toggle-sound");
   const notifEnableLabel = document.getElementById("notif-enable-label");
   const notifDisableLabel = document.getElementById("notif-disable-label");
 
@@ -1607,12 +1608,95 @@
     }
   }
 
+  // ── Suara notifikasi ─────────────────────────────────
+  // Nada dibuat langsung oleh browser (Web Audio API), jadi tidak butuh file
+  // audio. Browser melarang suara sebelum pengguna berinteraksi dengan
+  // halaman, jadi AudioContext baru dibuat/dibangunkan saat klik, sentuh,
+  // atau tekan tombol pertama. Preferensi suara disimpan di localStorage.
+  const SOUND_PREF_KEY = "smartgarden-notif-sound";
+  let soundOn = true;
+  try {
+    soundOn = localStorage.getItem(SOUND_PREF_KEY) !== "off";
+  } catch {}
+  let audioCtx = null;
+
+  function unlockAudio() {
+    try {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+    } catch {}
+  }
+  ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
+    window.addEventListener(ev, unlockAudio, { passive: true }),
+  );
+
+  // [frekuensi Hz, mulai (detik), durasi (detik)]
+  const SOUND_PATTERNS = {
+    alert: [[988, 0, 0.18], [784, 0.22, 0.18], [988, 0.44, 0.18], [784, 0.66, 0.3]],
+    info: [[659, 0, 0.14], [880, 0.15, 0.3]],
+    error: [[330, 0, 0.18], [262, 0.2, 0.32]],
+  };
+
+  function soundWillPlay() {
+    return soundOn && !!audioCtx && audioCtx.state === "running";
+  }
+
+  function playNotifSound(kind) {
+    if (!soundWillPlay()) return false;
+    const pattern = SOUND_PATTERNS[kind] || SOUND_PATTERNS.info;
+    const isAlert = kind === "alert";
+    try {
+      pattern.forEach(([freq, start, dur]) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const t0 = audioCtx.currentTime + start;
+        osc.type = isAlert ? "triangle" : "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(isAlert ? 0.35 : 0.22, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.05);
+      });
+    } catch {
+      return false;
+    }
+    return true;
+  }
+
+  function refreshSoundButtonUI() {
+    if (!btnToggleSound) return;
+    btnToggleSound.textContent = soundOn ? "🔊 Suara: Hidup" : "🔇 Suara: Mati";
+    btnToggleSound.setAttribute("aria-pressed", soundOn ? "true" : "false");
+  }
+
+  if (btnToggleSound) {
+    btnToggleSound.addEventListener("click", () => {
+      unlockAudio();
+      soundOn = !soundOn;
+      try {
+        localStorage.setItem(SOUND_PREF_KEY, soundOn ? "on" : "off");
+      } catch {}
+      refreshSoundButtonUI();
+      // Pratinjau nada saat suara dinyalakan (klik = interaksi, jadi boleh bunyi)
+      if (soundOn) setTimeout(() => playNotifSound("info"), 80);
+    });
+  }
+  refreshSoundButtonUI();
+
   // Tombol "Aktifkan Notifikasi": baru di titik INI izin browser
   // (Notification.requestPermission) diminta — bukan otomatis saat
   // halaman dibuka. Kalau user tidak pernah menekan tombol ini,
   // browser tidak akan pernah menampilkan popup izin notifikasi.
   async function enableNotif() {
     btnEnableNotif.disabled = true;
+    unlockAudio(); // klik ini = interaksi pengguna, jadi suara boleh dibunyikan
 
     // Minta izin notifikasi sistem HANYA saat tombol ini diklik. Apa pun
     // hasilnya (diizinkan / ditolak / tidak didukung), peringatan di dalam
@@ -1721,6 +1805,10 @@
           tag: payload.tag,
           renotify: true,
           vibrate: urgent ? [200, 100, 200, 100, 200] : [120],
+          // Senyap kalau suara dimatikan, atau kalau nada dari aplikasi sudah
+          // bunyi (supaya tidak dobel). Kalau nada aplikasi tidak bisa bunyi
+          // (belum ada interaksi / tab di-background), pakai suara bawaan sistem.
+          silent: !soundOn || soundWillPlay(),
         });
         return;
       }
@@ -1732,6 +1820,7 @@
     new Notification(payload.title, {
       body: payload.body,
       icon: payload.icon,
+      silent: !soundOn || soundWillPlay(),
     });
   }
 
@@ -3365,6 +3454,17 @@
     els.notifContainer
       .querySelectorAll(`.notif[data-title="${title}"]`)
       .forEach((n) => n.remove());
+
+    // Bunyikan nada sesuai jenis notifikasi (peringatan = nada darurat)
+    if (title !== "Notifikasi Dinonaktifkan") {
+      playNotifSound(
+        /^(PPM|pH) Terlalu/.test(title)
+          ? "alert"
+          : /Tidak Valid|Diblokir|Tidak Didukung|Masih Mati/.test(title)
+            ? "error"
+            : "info",
+      );
+    }
 
     const notif = document.createElement("div");
     notif.dataset.title = title;
