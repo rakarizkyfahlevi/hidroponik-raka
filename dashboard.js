@@ -1869,7 +1869,7 @@
       min: 0,
       max: 14,
       ideal: [6.0, 7.0],
-    }, // pH tanah ideal sawi 6.0-7.0
+    },
   };
 
   // ── DOM refs ─────────────────────────────────────────
@@ -1965,7 +1965,7 @@
       labels: [],
       datasets: [
         {
-          label: "Suhu (°C)",
+          label: "Suhu Air (°C)",
           data: [],
           borderColor: "#f59e0b",
           backgroundColor: "#f59e0b18",
@@ -2415,7 +2415,7 @@
       labels: [],
       datasets: [
         {
-          label: "pH Tanah",
+          label: "pH Air",
           data: [],
           borderColor: "#e11d48",
           backgroundColor: "#e11d4822",
@@ -3413,13 +3413,12 @@
     const issues = [];
     if (soil < 30) issues.push("tanah terlalu kering");
     if (soil > 85) issues.push("tanah terlalu basah");
-    if (temp > 32) issues.push("suhu terlalu tinggi");
-    if (temp < 12) issues.push("suhu terlalu rendah");
-    if (hum < 40) issues.push("kelembapan udara rendah");
+    if (temp > 32) issues.push("suhu Air terlalu tinggi");
+    if (temp < 12) issues.push("suhu Air terlalu rendah");
     if (typeof ph === "number" && ph < 5.5)
-      issues.push("pH tanah terlalu asam");
+      issues.push("pH Air terlalu asam");
     if (typeof ph === "number" && ph > 7.5)
-      issues.push("pH tanah terlalu basa");
+      issues.push("pH Air terlalu basa");
 
     if (issues.length === 0) {
       state = "normal";
