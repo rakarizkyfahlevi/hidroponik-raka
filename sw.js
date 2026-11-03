@@ -9,7 +9,7 @@ let SG_API_BASE_SW = '';
 try { importScripts('firebase-config.js'); SG_API_BASE_SW = SG_API_BASE; } catch (e) {}
 
 const SW_VERSION = 'smartgarden-sw-v21';
-const SHELL_CACHE = "smartgarden-shell-v30";
+const SHELL_CACHE = "smartgarden-shell-v31";
 
 // Aset inti ("app shell") yang di-precache saat install supaya aplikasi
 // tetap bisa dibuka (login maupun dashboard) walau koneksi lemah/offline.
@@ -112,6 +112,8 @@ self.addEventListener('push', (event) => {
             url: data.url || './',
         },
         requireInteraction: !!data.urgent,
+        // Suara hanya untuk peringatan PPM / pH (urgent); selain itu senyap
+        silent: data.urgent === false,
     };
 
     event.waitUntil(self.registration.showNotification(title, options));
