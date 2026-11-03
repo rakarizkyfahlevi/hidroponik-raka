@@ -1257,7 +1257,6 @@
 
   const btnEnableNotif = document.getElementById("btn-enable-notif");
   const btnDisableNotif = document.getElementById("btn-disable-notif");
-  const btnToggleSound = document.getElementById("btn-toggle-sound");
   const notifEnableLabel = document.getElementById("notif-enable-label");
   const notifDisableLabel = document.getElementById("notif-disable-label");
 
@@ -1608,41 +1607,31 @@
     }
   }
 
-  // ── Suara peringatan PPM / pH ────────────────────────
-  // Suara HANYA berbunyi ketika PPM atau pH berada di luar rentang ideal
-  // (di bawah batas minimal ATAU di atas batas maksimal) dan tombol suara
-  // sedang "Hidup". Tidak ada suara untuk klik tombol, simpan rentang, atau
-  // notifikasi informasi lain. Nada dibuat oleh browser (Web Audio API),
-  // jadi tidak butuh file audio. Browser melarang suara sebelum pengguna
-  // berinteraksi dengan halaman, jadi AudioContext dibangunkan saat klik,
-  // sentuh, atau tekan tombol pertama. Preferensi disimpan di localStorage.
-  const SOUND_PREF_KEY = "smartgarden-notif-sound";
-  let soundOn = true;
-  try {
-    soundOn = localStorage.getItem(SOUND_PREF_KEY) !== "off";
-  } catch {}
+  // ── Suara notifikasi PPM / pH ────────────────────────
+  // Suara HANYA berbunyi bersamaan dengan munculnya notifikasi peringatan
+  // PPM atau pH (di bawah minimal / di atas maksimal), dan hanya kalau
+  // notifikasi sedang aktif. Tidak ada suara untuk klik tombol, "Notifikasi
+  // Aktif", simpan rentang, atau notifikasi informasi lain. Nada dibuat
+  // browser (Web Audio API), tanpa file audio. Browser melarang suara sebelum
+  // ada interaksi, jadi AudioContext hanya "dibangunkan" saat klik/sentuh
+  // pertama (tanpa membunyikan apa pun).
   let audioCtx = null;
-  // Status yang sudah dibunyikan per sensor ("low" / "high" / null). Terpisah
-  // dari alertSent supaya menyimpan rentang baru tidak membunyikan ulang.
-  const soundSent = { ppm: null, ph: null };
 
   function unlockAudio() {
     try {
       if (!audioCtx) {
         const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return Promise.resolve();
+        if (!AC) return;
         audioCtx = new AC();
       }
-      if (audioCtx.state === "suspended")
-        return audioCtx.resume().catch(() => {});
+      if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
     } catch {}
-    return Promise.resolve();
   }
   ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
     window.addEventListener(ev, unlockAudio, { passive: true }),
   );
 
-  // [frekuensi Hz, mulai (detik), durasi (detik)] — nada peringatan
+  // [frekuensi Hz, mulai (detik), durasi (detik)]
   const ALERT_TONE = [
     [988, 0, 0.18],
     [784, 0.22, 0.18],
@@ -1650,12 +1639,9 @@
     [784, 0.66, 0.3],
   ];
 
-  function soundWillPlay() {
-    return soundOn && !!audioCtx && audioCtx.state === "running";
-  }
-
+  // Mengembalikan true kalau nada benar-benar dibunyikan.
   function playAlertSound() {
-    if (!soundWillPlay()) return false;
+    if (!audioCtx || audioCtx.state !== "running") return false;
     try {
       ALERT_TONE.forEach(([freq, start, dur]) => {
         const osc = audioCtx.createOscillator();
@@ -1677,35 +1663,12 @@
     return true;
   }
 
-  function refreshSoundButtonUI() {
-    if (!btnToggleSound) return;
-    btnToggleSound.textContent = soundOn ? "🔊 Suara: Hidup" : "🔇 Suara: Mati";
-    btnToggleSound.setAttribute("aria-pressed", soundOn ? "true" : "false");
-  }
-
-  if (btnToggleSound) {
-    btnToggleSound.addEventListener("click", () => {
-      soundOn = !soundOn;
-      try {
-        localStorage.setItem(SOUND_PREF_KEY, soundOn ? "on" : "off");
-      } catch {}
-      // Reset supaya kalau nilai masih di luar rentang saat suara dinyalakan
-      // kembali, peringatan langsung berbunyi (bukan nada contoh).
-      soundSent.ppm = null;
-      soundSent.ph = null;
-      refreshSoundButtonUI();
-      if (soundOn) unlockAudio().then(() => checkSensorAlerts());
-    });
-  }
-  refreshSoundButtonUI();
-
   // Tombol "Aktifkan Notifikasi": baru di titik INI izin browser
   // (Notification.requestPermission) diminta — bukan otomatis saat
   // halaman dibuka. Kalau user tidak pernah menekan tombol ini,
   // browser tidak akan pernah menampilkan popup izin notifikasi.
   async function enableNotif() {
     btnEnableNotif.disabled = true;
-    unlockAudio(); // klik ini = interaksi pengguna, jadi suara boleh dibunyikan
 
     // Minta izin notifikasi sistem HANYA saat tombol ini diklik. Apa pun
     // hasilnya (diizinkan / ditolak / tidak didukung), peringatan di dalam
@@ -1787,7 +1750,14 @@
   // Kirim notifikasi native lewat service worker (tampil di tray notifikasi HP,
   // termasuk saat aplikasi berjalan di background / layar terkunci pada PWA
   // yang sudah ter-install). Jatuh ke Notification API biasa sebagai fallback.
-  async function sendNativeNotification(type, icon, title, msg, urgent = true) {
+  async function sendNativeNotification(
+    type,
+    icon,
+    title,
+    msg,
+    urgent = true,
+    appSoundPlayed = false,
+  ) {
     if (!("Notification" in window) || Notification.permission !== "granted")
       return;
     // PENTING: hormati preferensi manual user. Izin browser yang "granted"
@@ -1814,10 +1784,10 @@
           tag: payload.tag,
           renotify: true,
           vibrate: urgent ? [200, 100, 200, 100, 200] : [120],
-          // Senyap kalau suara dimatikan, atau kalau nada dari aplikasi sudah
-          // bunyi (supaya tidak dobel). Kalau nada aplikasi tidak bisa bunyi
-          // (belum ada interaksi / tab di-background), pakai suara bawaan sistem.
-          silent: !soundOn || soundWillPlay(),
+          // Suara bawaan sistem HANYA untuk peringatan PPM / pH (urgent),
+          // dan dibisukan kalau nada aplikasi sudah bunyi (supaya tidak
+          // dobel). Notifikasi informasi seperti "Notifikasi Aktif" senyap.
+          silent: !urgent || appSoundPlayed,
         });
         return;
       }
@@ -1829,7 +1799,7 @@
     new Notification(payload.title, {
       body: payload.body,
       icon: payload.icon,
-      silent: !soundOn || soundWillPlay(),
+      silent: !urgent || appSoundPlayed,
     });
   }
 
@@ -2842,16 +2812,7 @@
     checks.forEach((c) => {
       if (c.status === "ok") {
         alertSent[c.key] = null; // normal lagi → reset
-        soundSent[c.key] = null;
         return;
-      }
-      // SUARA: langsung bunyi begitu nilai keluar rentang (di bawah minimal
-      // atau di atas maksimal), selama tombol suara Hidup. Tidak bergantung
-      // pada tombol notifikasi. Hanya ditandai kalau benar-benar berbunyi,
-      // jadi kalau browser masih menahan suara (belum ada klik), akan
-      // dicoba lagi di siklus data berikutnya.
-      if (soundOn && soundSent[c.key] !== c.status) {
-        if (playAlertSound()) soundSent[c.key] = c.status;
       }
       // Notifikasi MATI → jangan kirim & jangan tandai, supaya langsung
       // muncul begitu diaktifkan.
@@ -2860,7 +2821,11 @@
       alertSent[c.key] = c.status;
       const a = c.status === "high" ? c.high : c.low;
       showNotification("warn", c.icon, a.title, a.msg);
-      sendNativeNotification("warning", c.icon, a.title, a.short, true);
+      // Suara bunyi bersamaan dengan notifikasi muncul. Kalau nada aplikasi
+      // tidak bisa bunyi (belum ada interaksi / tab di background), notifikasi
+      // sistem memakai suara bawaannya.
+      const soundPlayed = playAlertSound();
+      sendNativeNotification("warning", c.icon, a.title, a.short, true, soundPlayed);
     });
   }
 
