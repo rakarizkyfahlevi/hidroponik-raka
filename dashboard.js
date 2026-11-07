@@ -1207,6 +1207,39 @@
     "ph-down": "Pompa/pH-Down",
   };
 
+   //mode kontrol
+   const MODE_DB_PATH = "mode/kontrol";
+   
+   let currentControlMode = "auto";
+   
+   const modeSelect = document.getElementById("mode-control-select");
+   const modeDescription = document.getElementById("mode-control-description");
+   
+   function applyModeUI(mode) {
+     currentControlMode = mode;
+   
+     if (modeSelect) {
+       modeSelect.value = mode;
+     }
+   
+     const manualEnabled = mode === "manual";
+   
+     Object.keys(CONTROL_DB_PATHS).forEach((name) => {
+       const sw = document.getElementById("switch-" + name);
+   
+       if (sw) {
+         sw.disabled = !manualEnabled;
+       }
+     });
+   
+     if (modeDescription) {
+       modeDescription.textContent =
+         mode === "auto"
+           ? "Mode Otomatis: pompa dikendalikan oleh ESP32 berdasarkan sensor dan aturan."
+           : "Mode Manual: pompa dapat dikendalikan langsung melalui tombol.";
+     }
+   }
+   
   // Ubah tampilan kartu (tanpa menyentuh database / penghitung).
   function applyControlUI(name, isOn) {
     const card = document.getElementById("control-" + name);
