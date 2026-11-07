@@ -1209,9 +1209,7 @@
 
    //mode kontrol
    const MODE_DB_PATH = "mode/kontrol";
-   
    let currentControlMode = "auto";
-   
    const modeSelect = document.getElementById("mode-control-select");
    const modeDescription = document.getElementById("mode-control-description");
    
@@ -1239,6 +1237,34 @@
            : "Mode Manual: pompa dapat dikendalikan langsung melalui tombol.";
      }
    }
+
+   if (typeof sgAuth !== "undefined" && typeof sgDb !== "undefined" && sgDb) {
+  sgAuth.onAuthStateChanged((user) => {
+    if (!user) return;
+
+    sgDb.ref(MODE_DB_PATH).on("value", (snapshot) => {
+      const mode = snapshot.val();
+
+      if (mode === "auto" || mode === "manual") {
+        applyModeUI(mode);
+      } else {
+        applyModeUI("auto");
+      }
+    });
+  });
+}
+   if (modeSelect && typeof sgDb !== "undefined" && sgDb) {
+  modeSelect.addEventListener("change", async () => {
+    const selectedMode = modeSelect.value;
+
+    try {
+      await sgDb.ref(MODE_DB_PATH).set(selectedMode);
+    } catch (error) {
+      console.error("Gagal mengubah mode:", error);
+      alert("Mode gagal diubah. Periksa koneksi Firebase.");
+    }
+  });
+}
    
   // Ubah tampilan kartu (tanpa menyentuh database / penghitung).
   function applyControlUI(name, isOn) {
@@ -1250,14 +1276,20 @@
     if (sw) sw.checked = isOn;
   }
 
-  function handleControlToggle(name, isOn) {
-    applyControlUI(name, isOn);
-    console.log("[SmartGarden] Kontrol", name, "→", isOn ? "ON" : "OFF");
+ function handleControlToggle(name, isOn) {
+  if (currentControlMode !== "manual") {
+    applyControlUI(name, false);
 
-    // Setiap kali dinyalakan (ON), catat sebagai satu kali penambahan.
-    if (isOn && typeof recordDoseEvent === "function") {
-      recordDoseEvent(name);
-    }
+    alert("Tombol pompa hanya dapat digunakan pada Mode Manual.");
+    return;
+  }
+  applyControlUI(name, isOn);
+  console.log(
+    "[SmartGarden] Kontrol",
+    name,
+    "→",
+    isOn ? "ON" : "OFF"
+  );
 
     // Kirim perintah ke ESP32 lewat Firebase kalau kontrol ini punya path-nya.
     const path = CONTROL_DB_PATHS[name];
