@@ -650,6 +650,40 @@ html {
   color: var(--red-500);
 }
 
+//tombol manual css
+.mode-control-card {
+  background: #ffffff;
+  border: 1px solid #b8f2d0;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.mode-control-card label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.mode-control-card select {
+  width: 100%;
+  max-width: 300px;
+  padding: 12px;
+  border: 1px solid #b8f2d0;
+  border-radius: 10px;
+  background: #f0fdf4;
+}
+
+.mode-control-card p {
+  margin-top: 10px;
+  color: #5f8b70;
+}
+
+.control-switch input:disabled + .control-slider {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 @media (max-width: 480px) {
   .settings-toggle-label {
     display: none;
